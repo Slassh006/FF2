@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
-import { OrderStatus, StoreItemStatus } from '@/app/types/store';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import { OrderStatus, StoreItemStatus } from '../app/types/store';
 
 // --- ADDED Interface for Applied Referral ---
 interface IAppliedReferral {
@@ -424,12 +424,13 @@ async function generateUniqueReferralCode(name: string): Promise<string> {
 }
 
 // Generate referral code before saving
-UserSchema.pre('save', async function(next) {
+UserSchema.pre<IUser>('save', async function(next: (err?: mongoose.CallbackError) => void) {
   if (!this.referralCode) {
     try {
       this.referralCode = await generateUniqueReferralCode(this.name);
-    } catch (error) {
-      next(error);
+    } catch (caughtError) {
+      const errorToPass: mongoose.CallbackError = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+      next(errorToPass);
       return;
     }
   }
@@ -438,8 +439,9 @@ UserSchema.pre('save', async function(next) {
     try {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
-    } catch (error) {
-      next(error);
+    } catch (caughtError) {
+      const errorToPass: mongoose.CallbackError = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+      next(errorToPass);
       return;
     }
   }
@@ -451,8 +453,11 @@ UserSchema.pre('save', async function(next) {
 UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Password comparison failed');
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new Error(`Password comparison failed: ${e.message}`);
+    }
+    throw new Error('Password comparison failed due to an unknown error');
   }
 };
 
@@ -481,8 +486,11 @@ UserSchema.methods.addCoins = async function(amount: number, reason?: string): P
   this.coins += amount;
     await this.logActivity('coins_added', { amount, reason });
   await this.save();
-  } catch (error) {
-    throw new Error(`Failed to add coins: ${error.message}`);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new Error(`Failed to add coins: ${e.message}`);
+    }
+    throw new Error('Failed to add coins due to an unknown error');
   }
 };
 
@@ -507,8 +515,11 @@ UserSchema.methods.deductCoins = async function(amount: number, reason?: string)
   this.coins -= amount;
     await this.logActivity('coins_removed', { amount, reason });
   await this.save();
-  } catch (error) {
-    throw new Error(`Failed to deduct coins: ${error.message}`);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new Error(`Failed to deduct coins: ${e.message}`);
+    }
+    throw new Error('Failed to deduct coins due to an unknown error');
   }
 };
 
@@ -781,8 +792,11 @@ UserSchema.methods.applyReferral = async function(referralCode: string): Promise
         amount: 50
       })
     ]);
-  } catch (error) {
-    throw new Error(`Failed to process referral rewards: ${error.message}`);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new Error(`Failed to process referral rewards: ${e.message}`);
+    }
+    throw new Error('Failed to process referral rewards due to an unknown error');
   }
 };
 

@@ -37,31 +37,75 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = connectDB;
+exports.getMongoClient = getMongoClient;
 var mongoose_1 = require("mongoose");
+var mongodb_1 = require("mongodb");
 var MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable');
 }
+var isConnecting = false;
+var connectionPromise = null;
+var mongoClient = null;
 function connectDB() {
     return __awaiter(this, void 0, void 0, function () {
         var error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 2, , 3]);
+                    _a.trys.push([0, 4, , 5]);
+                    // If already connected, return
                     if (mongoose_1.default.connection.readyState === 1) {
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, mongoose_1.default.connect(MONGODB_URI)];
-                case 1:
+                    if (!(isConnecting && connectionPromise)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, connectionPromise];
+                case 1: return [2 /*return*/, _a.sent()];
+                case 2:
+                    // Start new connection
+                    isConnecting = true;
+                    connectionPromise = mongoose_1.default.connect(MONGODB_URI, {
+                        bufferCommands: true, // Enable command buffering
+                        maxPoolSize: 10,
+                        serverSelectionTimeoutMS: 5000,
+                        socketTimeoutMS: 45000,
+                    });
+                    return [4 /*yield*/, connectionPromise];
+                case 3:
                     _a.sent();
                     console.log('Connected to MongoDB');
-                    return [3 /*break*/, 3];
-                case 2:
+                    // Reset connection state
+                    isConnecting = false;
+                    connectionPromise = null;
+                    return [2 /*return*/, mongoose_1.default];
+                case 4:
                     error_1 = _a.sent();
                     console.error('MongoDB connection error:', error_1);
+                    // Reset connection state on error
+                    isConnecting = false;
+                    connectionPromise = null;
                     throw error_1;
-                case 3: return [2 /*return*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+function getMongoClient() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!!mongoClient) return [3 /*break*/, 2];
+                    mongoClient = new mongodb_1.MongoClient(MONGODB_URI, {
+                        maxPoolSize: 10,
+                        serverSelectionTimeoutMS: 5000,
+                        socketTimeoutMS: 45000,
+                    });
+                    return [4 /*yield*/, mongoClient.connect()];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2: return [2 /*return*/, mongoClient];
             }
         });
     });

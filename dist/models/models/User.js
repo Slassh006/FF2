@@ -49,9 +49,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserSchema = void 0;
 var mongoose_1 = require("mongoose");
-var bcryptjs_1 = require("bcryptjs");
-var crypto_1 = require("crypto");
-var store_1 = require("@/app/types/store");
+var bcrypt = require("bcryptjs");
+var crypto = require("crypto");
+var store_1 = require("../app/types/store");
 exports.UserSchema = new mongoose_1.Schema({
     name: {
         type: String,
@@ -314,7 +314,7 @@ function generateUniqueReferralCode(name) {
             switch (_a.label) {
                 case 0:
                     namePart = name.substring(0, 3).toUpperCase();
-                    randomPart = crypto_1.default.randomBytes(2).toString('hex').toUpperCase();
+                    randomPart = crypto.randomBytes(2).toString('hex').toUpperCase();
                     code = "".concat(namePart).concat(randomPart);
                     return [4 /*yield*/, mongoose_1.default.models.User.findOne({ referralCode: code })];
                 case 1:
@@ -331,7 +331,7 @@ function generateUniqueReferralCode(name) {
 // Generate referral code before saving
 exports.UserSchema.pre('save', function (next) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, error_1, salt, _b, error_2;
+        var _a, caughtError_1, errorToPass, salt, _b, caughtError_2, errorToPass;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
@@ -345,25 +345,27 @@ exports.UserSchema.pre('save', function (next) {
                     _a.referralCode = _c.sent();
                     return [3 /*break*/, 4];
                 case 3:
-                    error_1 = _c.sent();
-                    next(error_1);
+                    caughtError_1 = _c.sent();
+                    errorToPass = caughtError_1 instanceof Error ? caughtError_1 : new Error(String(caughtError_1));
+                    next(errorToPass);
                     return [2 /*return*/];
                 case 4:
                     if (!this.isModified('password')) return [3 /*break*/, 9];
                     _c.label = 5;
                 case 5:
                     _c.trys.push([5, 8, , 9]);
-                    return [4 /*yield*/, bcryptjs_1.default.genSalt(10)];
+                    return [4 /*yield*/, bcrypt.genSalt(10)];
                 case 6:
                     salt = _c.sent();
                     _b = this;
-                    return [4 /*yield*/, bcryptjs_1.default.hash(this.password, salt)];
+                    return [4 /*yield*/, bcrypt.hash(this.password, salt)];
                 case 7:
                     _b.password = _c.sent();
                     return [3 /*break*/, 9];
                 case 8:
-                    error_2 = _c.sent();
-                    next(error_2);
+                    caughtError_2 = _c.sent();
+                    errorToPass = caughtError_2 instanceof Error ? caughtError_2 : new Error(String(caughtError_2));
+                    next(errorToPass);
                     return [2 /*return*/];
                 case 9:
                     next();
@@ -375,16 +377,19 @@ exports.UserSchema.pre('save', function (next) {
 // Compare password method
 exports.UserSchema.methods.comparePassword = function (candidatePassword) {
     return __awaiter(this, void 0, void 0, function () {
-        var error_3;
+        var e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, bcryptjs_1.default.compare(candidatePassword, this.password)];
+                    return [4 /*yield*/, bcrypt.compare(candidatePassword, this.password)];
                 case 1: return [2 /*return*/, _a.sent()];
                 case 2:
-                    error_3 = _a.sent();
-                    throw new Error('Password comparison failed');
+                    e_1 = _a.sent();
+                    if (e_1 instanceof Error) {
+                        throw new Error("Password comparison failed: ".concat(e_1.message));
+                    }
+                    throw new Error('Password comparison failed due to an unknown error');
                 case 3: return [2 /*return*/];
             }
         });
@@ -397,7 +402,7 @@ exports.UserSchema.methods.hasPermission = function (permission) {
 // Add coins method
 exports.UserSchema.methods.addCoins = function (amount, reason) {
     return __awaiter(this, void 0, void 0, function () {
-        var error_4;
+        var e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -428,8 +433,11 @@ exports.UserSchema.methods.addCoins = function (amount, reason) {
                     _a.sent();
                     return [3 /*break*/, 6];
                 case 5:
-                    error_4 = _a.sent();
-                    throw new Error("Failed to add coins: ".concat(error_4.message));
+                    e_2 = _a.sent();
+                    if (e_2 instanceof Error) {
+                        throw new Error("Failed to add coins: ".concat(e_2.message));
+                    }
+                    throw new Error('Failed to add coins due to an unknown error');
                 case 6: return [2 /*return*/];
             }
         });
@@ -438,7 +446,7 @@ exports.UserSchema.methods.addCoins = function (amount, reason) {
 // Deduct coins method
 exports.UserSchema.methods.deductCoins = function (amount, reason) {
     return __awaiter(this, void 0, void 0, function () {
-        var error_5;
+        var e_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -471,8 +479,11 @@ exports.UserSchema.methods.deductCoins = function (amount, reason) {
                     _a.sent();
                     return [3 /*break*/, 6];
                 case 5:
-                    error_5 = _a.sent();
-                    throw new Error("Failed to deduct coins: ".concat(error_5.message));
+                    e_3 = _a.sent();
+                    if (e_3 instanceof Error) {
+                        throw new Error("Failed to deduct coins: ".concat(e_3.message));
+                    }
+                    throw new Error('Failed to deduct coins due to an unknown error');
                 case 6: return [2 /*return*/];
             }
         });
@@ -530,7 +541,7 @@ exports.UserSchema.methods.generateResetToken = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    token = crypto_1.default.randomBytes(32).toString('hex');
+                    token = crypto.randomBytes(32).toString('hex');
                     this.resetToken = token;
                     this.resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
                     return [4 /*yield*/, this.save()];
@@ -551,7 +562,7 @@ exports.UserSchema.methods.generateEmailVerificationToken = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    token = crypto_1.default.randomBytes(32).toString('hex');
+                    token = crypto.randomBytes(32).toString('hex');
                     this.emailVerificationToken = token;
                     this.emailVerificationExpiry = new Date(Date.now() + 86400000); // 24 hours
                     return [4 /*yield*/, this.save()];
@@ -572,7 +583,7 @@ exports.UserSchema.methods.generateTwoFactorSecret = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    secret = crypto_1.default.randomBytes(20).toString('hex');
+                    secret = crypto.randomBytes(20).toString('hex');
                     this.twoFactorSecret = secret;
                     return [4 /*yield*/, this.save()];
                 case 1:
@@ -593,7 +604,7 @@ exports.UserSchema.methods.generateTwoFactorBackupCodes = function () {
             switch (_a.label) {
                 case 0:
                     codes = Array.from({ length: 8 }, function () {
-                        return crypto_1.default.randomBytes(4).toString('hex').toUpperCase();
+                        return crypto.randomBytes(4).toString('hex').toUpperCase();
                     });
                     this.twoFactorBackupCodes = codes;
                     return [4 /*yield*/, this.save()];
@@ -832,7 +843,7 @@ exports.UserSchema.methods.validateReferral = function (referralCode) {
 // Add method to apply referral
 exports.UserSchema.methods.applyReferral = function (referralCode) {
     return __awaiter(this, void 0, void 0, function () {
-        var referrer, error_6;
+        var referrer, e_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, this.validateReferral(referralCode)];
@@ -911,8 +922,11 @@ exports.UserSchema.methods.applyReferral = function (referralCode) {
                     _a.sent();
                     return [3 /*break*/, 10];
                 case 9:
-                    error_6 = _a.sent();
-                    throw new Error("Failed to process referral rewards: ".concat(error_6.message));
+                    e_4 = _a.sent();
+                    if (e_4 instanceof Error) {
+                        throw new Error("Failed to process referral rewards: ".concat(e_4.message));
+                    }
+                    throw new Error('Failed to process referral rewards due to an unknown error');
                 case 10: return [2 /*return*/];
             }
         });

@@ -1,7 +1,31 @@
+const path = require('path');
+
+if (process.env.NODE_ENV === 'production') {
+  const envPath = path.resolve(__dirname, '.env.production');
+  console.log(`[DEBUG] Attempting to load .env.production from: ${envPath}`);
+  const envConfig = require('dotenv').config({ path: envPath });
+  if (envConfig.error) {
+    console.error('[DEBUG] Error loading .env.production:', envConfig.error);
+  } else {
+    console.log('[DEBUG] .env.production loaded successfully. Parsed variables:', envConfig.parsed ? Object.keys(envConfig.parsed) : 'None');
+  }
+} else {
+  const envPath = path.resolve(__dirname, '.env.development'); // Or simply .env
+  console.log(`[DEBUG] Attempting to load development .env from: ${envPath}`);
+  const envConfig = require('dotenv').config({ path: envPath }); // Or just .config() for .env
+  if (envConfig.error) {
+    console.error('[DEBUG] Error loading development .env:', envConfig.error);
+  } else {
+    console.log('[DEBUG] Development .env loaded successfully. Parsed variables:', envConfig.parsed ? Object.keys(envConfig.parsed) : 'None');
+  }
+}
+
+console.log(`[DEBUG] MONGODB_URI after dotenv in server.js: ${process.env.MONGODB_URI}`);
+console.log(`[DEBUG] TEST_VAR after dotenv in server.js: ${process.env.TEST_VAR}`);
+
 const express = require('express');
 const next = require('next');
-const { connectDB } = require('./lib/db');
-const path = require('path');
+const { connectDB } = require('./dist/lib/db');
 const fs = require('fs');
 
 const dev = process.env.NODE_ENV !== 'production';
